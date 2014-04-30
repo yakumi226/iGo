@@ -221,7 +221,7 @@ obj
 Lens Flares
 Standard Assets
 Editor
-Assembly-CSharp*
+
 *.pidb
 *.unityproj
 *.sln
