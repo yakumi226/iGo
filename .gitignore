@@ -224,6 +224,5 @@ Editor
 
 *.pidb
 *.unityproj
-*.sln
 *.userprefs
 *.svd
