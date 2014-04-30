@@ -1,0 +1,12 @@
+fileFormatVersion: 2
+guid: 8b77a5ddf7d56b34d996d3dc1c518a76
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences:
+  - cursor: {fileID: 100000, guid: 5f632dd8bcabd6c4f844218e529616e0, type: 2}
+  - redPoint: {fileID: 100000, guid: ff96c29181cc6634f832cd16dae15ded, type: 2}
+  - blackStone: {fileID: 100000, guid: ad20f9a7040c63543bd8ca0905efb27f, type: 2}
+  - whiteStone: {fileID: 100000, guid: 507d4a1f24dec2c41a2028f67ec69e21, type: 2}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
