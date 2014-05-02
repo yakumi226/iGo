@@ -77,15 +77,18 @@ public class GameBoardManager : MonoBehaviour {
 
 		// Player can put stone when there is no stones.  
 		if( BoardState.EMPTY == boardController.getBoardState(x,y) ){
-			count++;
+			bool success;
 			if( 0 == (count % 2) ) {
-				boardController.setBoard (BoardState.WHITE_STONE,x,y);
+				success = boardController.setBoard (BoardState.BLACK_STONE,x,y);
 			}
 			else{
-				boardController.setBoard (BoardState.BLACK_STONE,x,y);
+				success = boardController.setBoard (BoardState.WHITE_STONE,x,y);
 			}
-			rand = Random.Range (0,2);
-			AudioSource.PlayClipAtPoint(se[rand],cursor_pos);
+			if(true == success){
+				count++;
+				rand = Random.Range (0,2);
+				AudioSource.PlayClipAtPoint(se[rand],cursor_pos);
+			}
 		}
 	}
 

@@ -13,10 +13,11 @@ public class BoardStateController : MonoBehaviour {
 
 	// Board State Queue for Searching
 	private Queue<SearchPointStruct> m_searchQueue;
-	private Queue<SearchPointStruct> m_leftSideQueue;
-	private Queue<SearchPointStruct> m_rightSideQueue;
-	private Queue<SearchPointStruct> m_upSideQueue;
-	private Queue<SearchPointStruct> m_downSideQueue;
+	private Queue<SearchPointStruct> [] m_destroyStonesQueue;
+	private Queue<SearchPointStruct> [] m_emptySpaceQueue;
+	
+	private bool [] m_emptySpaceExsisted;
+
 	// Use this for initialization
 	void Awake () {
 	}
@@ -38,23 +39,27 @@ public class BoardStateController : MonoBehaviour {
 		m_boardArray = new boardStruct[21,21];
 
 		// Create Queue
-		m_searchQueue = new Queue<SearchPointStruct>();
-		m_leftSideQueue = new Queue<SearchPointStruct>();
-		m_rightSideQueue = new Queue<SearchPointStruct>();
-		m_upSideQueue = new Queue<SearchPointStruct>();
-		m_downSideQueue = new Queue<SearchPointStruct>();
+		m_searchQueue = new Queue<SearchPointStruct> ();
+		m_destroyStonesQueue = new Queue<SearchPointStruct> [4] ;
+		m_emptySpaceQueue = new Queue<SearchPointStruct> [4];
+
+		for(i=0;i<4;i++){
+			m_destroyStonesQueue[i] = new Queue<SearchPointStruct> ();
+			m_emptySpaceQueue[i] = new Queue<SearchPointStruct> ();
+		}
+		
+		// Is EmptySpace Exist Flag Clear 
+		m_emptySpaceExsisted = new bool[4] {false,false,false,false};
 
 		m_searchQueue.Clear ();
-		m_searchQueue.TrimExcess();
-		m_leftSideQueue.Clear ();
-		m_leftSideQueue.TrimExcess();
-		m_rightSideQueue.Clear ();
-		m_rightSideQueue.TrimExcess();
-		m_upSideQueue.Clear ();
-		m_upSideQueue.TrimExcess();
-		m_downSideQueue.Clear ();
-		m_downSideQueue.TrimExcess();
+		m_searchQueue.TrimExcess ();
 
+		for(i=0;i<4;i++){
+			m_destroyStonesQueue[i].Clear ();
+			m_destroyStonesQueue[i].TrimExcess ();
+			m_emptySpaceQueue[i].Clear ();
+			m_emptySpaceQueue[i].TrimExcess ();
+		}
 
 		// Make wall and Fill Other are with Empty Space.
 		for(i=0;i<21;++i){
@@ -82,16 +87,18 @@ public class BoardStateController : MonoBehaviour {
 
 		// Clear Queue
 		m_searchQueue.Clear ();
-		m_searchQueue.TrimExcess();
-		m_leftSideQueue.Clear ();
-		m_leftSideQueue.TrimExcess();
-		m_rightSideQueue.Clear ();
-		m_rightSideQueue.TrimExcess();
-		m_upSideQueue.Clear ();
-		m_upSideQueue.TrimExcess();
-		m_downSideQueue.Clear ();
-		m_downSideQueue.TrimExcess();
+		m_searchQueue.TrimExcess ();
 
+		for(i=0;i<4;i++){
+			m_destroyStonesQueue[i].Clear ();
+			m_destroyStonesQueue[i].TrimExcess ();
+			m_emptySpaceQueue[i].Clear ();
+			m_emptySpaceQueue[i].TrimExcess ();
+		}
+
+		for(i=0;i<4;i++){
+			m_emptySpaceExsisted[i] = false;
+		}
 
 		// Make wall and Fill Other are with Empty Space.
 		for(i=0;i<21;++i){
@@ -131,30 +138,70 @@ public class BoardStateController : MonoBehaviour {
 				Destroy(m_boardArray[x,y].stone.gameObject);
 				m_boardArray[x,y].stone = null;
 			}
-			// Set State
-			m_boardArray[x,y].status = state;
 
-			//  Set a black stone on GameBoard.
-			if( BoardState.BLACK_STONE ==  m_boardArray[x,y].status ){
-				m_boardArray[x,y].stone = (GameObject)Instantiate (m_blackStone,m_boardArray[x,y].point,Quaternion.identity);
-
-				m_boardArray[x,y].stone.transform.parent = this.transform;
-
-				searchDestroyStone(m_boardArray[x,y].status,x,y);
+			// Set empty state.
+			if(BoardState.EMPTY ==  state){
+				// Set State
+				m_boardArray[x,y].status = state;
 			}
-			//  Set a white stone on GameBoard.
-			else if ( BoardState.WHITE_STONE == m_boardArray[x,y].status ) {
-				m_boardArray[x,y].stone = (GameObject)Instantiate (m_whiteStone,m_boardArray[x,y].point,Quaternion.identity);
-
-				m_boardArray[x,y].stone.transform.parent = this.transform;
-			
-				searchDestroyStone(m_boardArray[x,y].status,x,y);
-			}
-			//  Set empty state.
+			// Set Stones
 			else{
-			}
-		}
+				// For check whether it will be destroyed 
+				BoardState searchStone;
 
+				//  Decide searching stone
+				if( BoardState.BLACK_STONE ==  state ){
+					// Search white stones that should be destoyed 
+					searchStone = BoardState.WHITE_STONE;
+				}
+				else{
+					// Search black stones that should be destoyed 
+					searchStone = BoardState.BLACK_STONE;
+				}
+				
+				// Search Destroy Stones
+				if(true == searchDestroyStones(searchStone,state,x,y)){
+					// Destroy Searched Stones
+					destroySearchedStones();
+					// Can put a stone
+					ret = true;
+				}
+				else{
+					//  Decide searching stone
+					searchStone = state;
+
+					// Check whether putting a stone is possible;
+					if(true == searchDestroyStones(searchStone,state,x,y)){
+						// Cannot put a stone
+						ret = false;
+					}
+					else{
+						// Can put a stone
+						ret = true;
+					}
+				}
+				// Can put a stone
+				if(true == ret){
+					// Set State
+					m_boardArray[x,y].status = state;
+					
+					//  Set a black stone on GameBoard.
+					if( BoardState.BLACK_STONE ==  state ){
+						// Create a black stone of object 
+						m_boardArray[x,y].stone = (GameObject)Instantiate (m_blackStone,m_boardArray[x,y].point,Quaternion.identity);
+					}
+					//  Set a white stone on GameBoard.
+					else{
+						// Create a white stone of object 
+						m_boardArray[x,y].stone = (GameObject)Instantiate (m_whiteStone,m_boardArray[x,y].point,Quaternion.identity);
+					}
+					// Regist Parant Object (GO-Board)
+					m_boardArray[x,y].stone.transform.parent = this.transform;
+				}
+			}
+			
+		}
+		
 		return ret;
 	}
 
@@ -174,40 +221,36 @@ public class BoardStateController : MonoBehaviour {
 	}
 
 	// Search Process for Destroy Stone
-	private bool searchDestroyStone(BoardState state,int x, int y){
+	private bool searchDestroyStones(BoardState searchStone,BoardState putStone,int x, int y){
 		int i,j;
-		BoardState searchStone;
 		BoardState tempState;
 		SearchPointStruct searchPoint;
 		SearchPointStruct searchPointNext;
 
-		bool ret = true;
-		bool [] emptySpaceExsisted = new bool[4] {false,false,false,false};
+		bool ret = false;
 
 		// Paramter Range Check
 		if( (1 > x) || ( 19 < x ) || ( 1 > y ) || ( 19 < y ) ){
 			ret = false;
 		}
-		else if( (BoardState.BLACK_STONE != state) && ( BoardState.WHITE_STONE != state ) ){
+		else if( (BoardState.BLACK_STONE != searchStone) && ( BoardState.WHITE_STONE != searchStone ) ){
 			ret = false;
 		}
 		else{
+			// Clear SearchQueue
+			m_searchQueue.Clear ();
+			m_searchQueue.TrimExcess ();
 
-			m_leftSideQueue.Clear ();
-			m_leftSideQueue.TrimExcess();
-			m_rightSideQueue.Clear ();
-			m_rightSideQueue.TrimExcess();
-			m_upSideQueue.Clear ();
-			m_upSideQueue.TrimExcess();
-			m_downSideQueue.Clear ();
-			m_downSideQueue.TrimExcess();
-
-			// Decide Search Stones Color
-			if(BoardState.BLACK_STONE == state){
-				searchStone = BoardState.WHITE_STONE;
+			for(i=0;i<4;i++){
+				m_destroyStonesQueue[i].Clear ();
+				m_destroyStonesQueue[i].TrimExcess ();
+				m_emptySpaceQueue[i].Clear ();
+				m_emptySpaceQueue[i].TrimExcess ();
 			}
-			else{
-				searchStone = BoardState.BLACK_STONE;
+
+			// Clear Search Flag and Count
+			for(i=0;i<4;i++){
+				m_emptySpaceExsisted[i] = false;
 			}
 
 			// Searched Flag On
@@ -219,88 +262,43 @@ public class BoardStateController : MonoBehaviour {
 					/// ---Search to the left direction ---
 					searchPointNext.x = x -1;
 					searchPointNext.y = y;
-
-					if(false == m_boardArray[searchPointNext.x,searchPointNext.y].isSearched){
-						tempState = m_boardArray[searchPointNext.x,searchPointNext.y].status;
-						
-						if(searchStone == tempState){
-							m_searchQueue.Enqueue (searchPointNext);
-							m_leftSideQueue.Enqueue (searchPointNext);
-						}
-						else if(BoardState.EMPTY == tempState){
-							emptySpaceExsisted[i] = true;
-						}
-						else{
-							// do nothing
-						}
-					}
 					break;
 				case 1:
 					/// ---Search to the Upside direction ---
 					searchPointNext.x = x;
 					searchPointNext.y = y-1;
-
-					if(false == m_boardArray[searchPointNext.x,searchPointNext.y].isSearched){
-						tempState = m_boardArray[searchPointNext.x,searchPointNext.y].status;
-						
-						if(searchStone == tempState){
-							m_searchQueue.Enqueue (searchPointNext);
-							m_upSideQueue.Enqueue (searchPointNext);
-						}
-						else if(BoardState.EMPTY == tempState){
-							emptySpaceExsisted[i] = true;
-						}
-						else{
-							// do nothing
-						}
-					}
 					break;
 				case 2:
 					/// ---Search to the right direction ---
 					searchPointNext.x = x+1;
 					searchPointNext.y = y;
-
-					if(false == m_boardArray[searchPointNext.x,searchPointNext.y].isSearched){
-						tempState = m_boardArray[searchPointNext.x,searchPointNext.y].status;
-						
-						if(searchStone == tempState){
-							m_searchQueue.Enqueue (searchPointNext);
-							m_rightSideQueue.Enqueue (searchPointNext);
-						}
-						else if(BoardState.EMPTY == tempState){
-							emptySpaceExsisted[i] = true;
-						}
-						else{
-							// do nothing
-						}
-					}
 					break;
 				case 3:
 					/// ---Search to the Downside direction ---
 					searchPointNext.x = x;
 					searchPointNext.y = y+1;
-
-					if(false == m_boardArray[searchPointNext.x,searchPointNext.y].isSearched){
-						tempState = m_boardArray[searchPointNext.x,searchPointNext.y].status;
-
-						if(searchStone == tempState){
-							m_searchQueue.Enqueue (searchPointNext);
-							m_downSideQueue.Enqueue (searchPointNext);
-						}
-						else if(BoardState.EMPTY == tempState){
-							emptySpaceExsisted[i] = true;
-						}
-						else{
-							// do nothing
-						}
-					}
 					break;
 				default:
 					searchPointNext.x = x;
 					searchPointNext.y = y;
 					break;
 				}
+				if(false == m_boardArray[searchPointNext.x,searchPointNext.y].isSearched){
+					tempState = m_boardArray[searchPointNext.x,searchPointNext.y].status;
+					
+					if(searchStone == tempState){
+						m_searchQueue.Enqueue (searchPointNext);
+						m_destroyStonesQueue[i].Enqueue (searchPointNext);
 
+					}
+					else if(BoardState.EMPTY == tempState){
+						m_emptySpaceExsisted[i] = true;
+						m_emptySpaceQueue[i].Enqueue (searchPointNext);
+					}
+					else{
+						// do nothing
+					}
+				}
 				while(0 < m_searchQueue.Count){
 					searchPoint = m_searchQueue.Dequeue ();
 
@@ -330,107 +328,83 @@ public class BoardStateController : MonoBehaviour {
 								searchPointNext.y = searchPoint.y+1;
 								break;
 							default:
+								searchPointNext.x = searchPoint.x;
+								searchPointNext.y = searchPoint.y;
 								break;
 							}
-							tempState = m_boardArray[searchPointNext.x,searchPointNext.y].status;
-								
-							if(BoardState.EMPTY == tempState){
-								emptySpaceExsisted[i] = true;
-							}
-							else if(searchStone == tempState){
-								if(false == m_boardArray[searchPointNext.x,searchPointNext.y].isSearched){
-									m_searchQueue.Enqueue (searchPointNext);
-									switch(i){
-									case 0:
-										m_leftSideQueue.Enqueue (searchPointNext);
-										break;
-									case 1:
-										m_upSideQueue.Enqueue (searchPointNext);
-										break;
-									case 2:
-										m_rightSideQueue.Enqueue (searchPointNext);
-										break;
-									case 3:
-										m_downSideQueue.Enqueue (searchPointNext);
-										break;
-									default:
-										break;
-									}
+							if(false == m_boardArray[searchPointNext.x,searchPointNext.y].isSearched){
+								tempState = m_boardArray[searchPointNext.x,searchPointNext.y].status;
+								if(BoardState.EMPTY == tempState){
+									m_emptySpaceExsisted[i] = true;
+									m_emptySpaceQueue[i].Enqueue (searchPointNext);
 								}
-							}
-							else{
-								// do nothing
+								else if(searchStone == tempState){
+									m_searchQueue.Enqueue (searchPointNext);
+									m_destroyStonesQueue[i].Enqueue (searchPointNext);
+								}
+								else{
+									// do nothing
+								}
 							}
 						}
 					}
 					// Searched Flag On
 					m_boardArray[searchPoint.x,searchPoint.y].isSearched = true;
-
+				}
+			}
+			// Clear Searched Flag
+			for(i=0;i<21;++i){
+				for(j=0;j<21;++j){
+					m_boardArray[i,j].isSearched = false;
+				}
+			}
+			// Checking Destroy Stones are exist.
+			if(searchStone != putStone){
+				// <<< When it is different in serchStone and putStone >>>
+				// If there are stones that should be destroyed in any direction(4-direction), Return that it is exist. 
+				// true = destroyStone is exist, false = destroyStone is not exist.
+				for(i=0;i<4;i++){
+					if( (false == m_emptySpaceExsisted[i]) && (0 < m_destroyStonesQueue[i].Count) ){
+						ret = true;
+					}
+				}
+			}
+			// Checking whether Putting Stone is possible.
+			else{
+				if( (false == m_emptySpaceExsisted[0] )
+				 && (false == m_emptySpaceExsisted[1] )
+				 && (false == m_emptySpaceExsisted[2] ) 
+				 && (false == m_emptySpaceExsisted[3] ) )
+				{
+					// <<< When searchStone is the same as putStone >>>
+					// When there is no empty space in all-direction, Return that player cannot put stone.
+					// true = cannot , false = can
+					ret = true;
 				}
 			}
 		}
-
-		for(i=0;i<21;++i){
-			for(j=0;j<21;++j){
-				m_boardArray[i,j].isSearched = false;
-			}
-		}
-
-		//[TEST:: Stone Destroy]
-		for(i=0;i<4;i++){
-			if( false == emptySpaceExsisted[i]){
-				switch(i){
-				case 0:
-					foreach (SearchPointStruct tempPoint in m_leftSideQueue)
-					{
-						tempState = m_boardArray[tempPoint.x,tempPoint.y].status;
-
-						if(BoardState.EMPTY != tempState){
-							m_boardArray[tempPoint.x,tempPoint.y].status = BoardState.EMPTY;
-							Destroy(m_boardArray[tempPoint.x,tempPoint.y].stone);
-						}
-					}
-					break;
-				case 1:
-					foreach (SearchPointStruct tempPoint in m_upSideQueue)
-					{
-						tempState = m_boardArray[tempPoint.x,tempPoint.y].status;
-						
-						if(BoardState.EMPTY != tempState){
-							m_boardArray[tempPoint.x,tempPoint.y].status = BoardState.EMPTY;
-							Destroy(m_boardArray[tempPoint.x,tempPoint.y].stone);
-						}
-					}
-					break;
-				case 2:
-					foreach (SearchPointStruct tempPoint in m_rightSideQueue)
-					{
-						tempState = m_boardArray[tempPoint.x,tempPoint.y].status;
-						
-						if(BoardState.EMPTY != tempState){
-							m_boardArray[tempPoint.x,tempPoint.y].status = BoardState.EMPTY;
-							Destroy(m_boardArray[tempPoint.x,tempPoint.y].stone);
-						}
-					}
-					break;
-				case 3:
-					foreach (SearchPointStruct tempPoint in m_downSideQueue)
-					{
-						tempState = m_boardArray[tempPoint.x,tempPoint.y].status;
-						
-						if(BoardState.EMPTY != tempState){
-							m_boardArray[tempPoint.x,tempPoint.y].status = BoardState.EMPTY;
-							Destroy(m_boardArray[tempPoint.x,tempPoint.y].stone);
-						}
-					}
-					break;
-				default:
-					break;
-				}
-			}
-		}
-
+			
 		return ret;
 	}
+	private bool destroySearchedStones(){
+		int i;
+		bool ret = false;
+		BoardState tempState = BoardState.EMPTY;
 
+		for(i=0;i<4;i++){
+			if( false == m_emptySpaceExsisted[i]){
+				foreach (SearchPointStruct tempPoint in m_destroyStonesQueue[i])
+				{
+					tempState = m_boardArray[tempPoint.x,tempPoint.y].status;
+					
+					if(BoardState.EMPTY != tempState){
+						m_boardArray[tempPoint.x,tempPoint.y].status = BoardState.EMPTY;
+						Destroy(m_boardArray[tempPoint.x,tempPoint.y].stone);
+					}
+				}
+				ret = true;
+			}
+		}
+		return ret;
+	}
 }
