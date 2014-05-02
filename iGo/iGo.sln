@@ -29,7 +29,7 @@ Global
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
-																																																																					GlobalSection(MonoDevelopProperties) = preSolution
+																																																																																															GlobalSection(MonoDevelopProperties) = preSolution
 		StartupItems = $0
 		$0.Item = Assembly-UnityScript-firstpass.unityproj
 		$0.Item = Assembly-CSharp.csproj

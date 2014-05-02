@@ -1,8 +1,10 @@
 ﻿<Properties>
-  <MonoDevelop.Ide.Workspace />
-  <MonoDevelop.Ide.Workbench ActiveDocument="..\..\..\..\..\work\Clone\iGo\iGo\Assets\Scripts\GameBoardManager.cs">
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\Scripts\BoardStateController.cs">
     <Files>
-      <File FileName="..\..\..\..\..\work\Clone\iGo\iGo\Assets\Scripts\GameBoardManager.cs" Line="1" Column="1" />
+      <File FileName="Assets\Scripts\BoardStateController.cs" Line="1" Column="1" />
+      <File FileName="Assets\Scripts\BoardStateController.cs" Line="372" Column="28" />
+      <File FileName="Assets\Scripts\GameBoardManager.cs" Line="1" Column="1" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
