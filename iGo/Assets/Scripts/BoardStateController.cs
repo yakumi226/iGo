@@ -14,9 +14,16 @@ public class BoardStateController : MonoBehaviour {
 	// Board State Queue for Searching
 	private Queue<SearchPointStruct> m_searchQueue;
 	private Queue<SearchPointStruct> [] m_destroyStonesQueue;
-	private Queue<SearchPointStruct> [] m_emptySpaceQueue;
+    private Queue<SearchPointStruct>[] m_emptySpaceQueue;
+
+    // Queue and Stack for Game Record
+    private Queue<SearchPointStruct> m_recordQueue;
+    private Stack<SearchPointStruct> m_recordStack;
 	
 	private bool [] m_emptySpaceExsisted;
+
+    // previous one destroyed flag
+    private bool m_previousDestroyed;
 
 	// Use this for initialization
 	void Awake () {
@@ -38,10 +45,14 @@ public class BoardStateController : MonoBehaviour {
 		// Create Array
 		m_boardArray = new boardStruct[21,21];
 
+        m_previousDestroyed = false;
+
 		// Create Queue
 		m_searchQueue = new Queue<SearchPointStruct> ();
 		m_destroyStonesQueue = new Queue<SearchPointStruct> [4] ;
 		m_emptySpaceQueue = new Queue<SearchPointStruct> [4];
+        m_recordQueue = new Queue<SearchPointStruct>();
+        m_recordStack = new Stack<SearchPointStruct>();
 
 		for(i=0;i<4;i++){
 			m_destroyStonesQueue[i] = new Queue<SearchPointStruct> ();
@@ -53,6 +64,10 @@ public class BoardStateController : MonoBehaviour {
 
 		m_searchQueue.Clear ();
 		m_searchQueue.TrimExcess ();
+        m_recordQueue.Clear ();
+        m_recordQueue.TrimExcess();
+        m_recordStack.Clear();
+        m_recordStack.TrimExcess();
 
 		for(i=0;i<4;i++){
 			m_destroyStonesQueue[i].Clear ();
@@ -85,11 +100,17 @@ public class BoardStateController : MonoBehaviour {
 	public void clearBoard(){
 		int i,j;
 
-		// Clear Queue
-		m_searchQueue.Clear ();
-		m_searchQueue.TrimExcess ();
+        m_previousDestroyed = false;
 
-		for(i=0;i<4;i++){
+        // Clear Queue
+        m_searchQueue.Clear ();
+		m_searchQueue.TrimExcess ();
+        m_recordQueue.Clear();
+        m_recordQueue.TrimExcess();
+        m_recordStack.Clear();
+        m_recordStack.TrimExcess();
+
+        for (i=0;i<4;i++){
 			m_destroyStonesQueue[i].Clear ();
 			m_destroyStonesQueue[i].TrimExcess ();
 			m_emptySpaceQueue[i].Clear ();
@@ -121,8 +142,21 @@ public class BoardStateController : MonoBehaviour {
 
 	// IF::Set state to Gameboard 
 	public bool setBoard( BoardState state,int x, int y){
-		// Return Value 
-		bool ret = true;
+
+        // Set stone point for Record
+        SearchPointStruct setPoint;
+        SearchPointStruct beforeSetPoint;
+
+        // Check for "Kou";
+        SearchPointStruct destroyPoint;
+
+        int i;
+
+        // Return Value 
+        bool ret = true;
+
+        // check "KOU" 
+        bool kouFlag = false;
 
 		// Paramter Range Check
 		if( BoardState.WALL == state ){
@@ -161,17 +195,48 @@ public class BoardStateController : MonoBehaviour {
 				
 				// Search Destroy Stones
 				if(true == searchDestroyStones(searchStone,state,x,y)){
-					// Destroy Searched Stones
-					destroySearchedStones();
-					// Can put a stone
-					ret = true;
-				}
+                    // Check for "KOU"
+                    for (i = 0; i < 4; i++)
+                    {
+                        if (1 == m_destroyStonesQueue[i].Count)
+                        {
+                            destroyPoint = m_destroyStonesQueue[i].Peek();
+                            beforeSetPoint = m_recordStack.Peek();
+
+                            if ((destroyPoint.x == beforeSetPoint.x) &&
+                                (destroyPoint.y == beforeSetPoint.y) &&
+                                (true == m_previousDestroyed) &&
+                                (true == isSuicidePoint(state,x,y)) )
+                            {
+                                kouFlag = true;
+                            }
+                        }
+                    }
+                    if (false == kouFlag)
+                    {
+                        // Destroy Searched Stones
+                        destroySearchedStones();
+
+                        m_previousDestroyed = true;
+
+                        // Can put a stone
+                        ret = true;
+                    }
+                    else
+                    {
+                        // Cannot put a stone because "KOU"
+                        ret = false;
+                    }
+
+                }
 				else{
 					//  Decide searching stone
 					searchStone = state;
 
-					// Check whether putting a stone is possible;
-					if(true == searchDestroyStones(searchStone,state,x,y)){
+                    m_previousDestroyed = false;
+
+                    // Check whether putting a stone is possible;
+                    if (true == searchDestroyStones(searchStone,state,x,y)){
 						// Cannot put a stone
 						ret = false;
 					}
@@ -201,8 +266,16 @@ public class BoardStateController : MonoBehaviour {
 			}
 			
 		}
-		
-		return ret;
+        // Make record
+        if (true == ret)
+        {
+            setPoint.x = x;
+            setPoint.y = y;
+            m_recordQueue.Enqueue(setPoint);
+            m_recordStack.Push(setPoint);
+        }
+
+        return ret;
 	}
 
 	// IF:Get state from Gameboard
@@ -220,8 +293,52 @@ public class BoardStateController : MonoBehaviour {
 		return ret;
 	}
 
-	// Search Process for Destroy Stone
-	private bool searchDestroyStones(BoardState searchStone,BoardState putStone,int x, int y){
+    // Search Process for "KOU" Suicide point
+    private bool isSuicidePoint(BoardState putStone,int x,int y)
+    {
+        int i;
+
+        bool ret = false;
+        BoardState searchStone;
+        BoardState [] tempState = new BoardState[4];
+
+        //  Decide searching stone
+        if (BoardState.BLACK_STONE == putStone)
+        {
+            // Search white stones that should be destoyed 
+            searchStone = BoardState.WHITE_STONE;
+        }
+        else
+        {
+            // Search black stones that should be destoyed 
+            searchStone = BoardState.BLACK_STONE;
+        }
+
+        tempState[0] = getBoardState(x - 1, y);
+        tempState[1] = getBoardState(x, y + 1);
+        tempState[2] = getBoardState(x + 1, y);
+        tempState[3] = getBoardState(x, y - 1);
+
+        for (i = 0; i < 4; i++)
+        {
+            if((searchStone == tempState[i]) ||
+               (BoardState.WALL == tempState[i]) )
+            {
+                ret = true;
+            }
+            else
+            {
+                ret = false;
+                break;
+            }
+        }
+
+
+        return ret;
+    }
+
+    // Search Process for Destroy Stone
+    private bool searchDestroyStones(BoardState searchStone,BoardState putStone,int x, int y){
 		int i,j;
 		BoardState tempState;
 		SearchPointStruct searchPoint;

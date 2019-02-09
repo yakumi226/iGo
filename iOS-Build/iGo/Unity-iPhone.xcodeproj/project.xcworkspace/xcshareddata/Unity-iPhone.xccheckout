@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
+	<false/>
+	<key>IDESourceControlProjectIdentifier</key>
+	<string>A295DDDF-8F94-4BBA-A898-9DE61EE724AB</string>
+	<key>IDESourceControlProjectName</key>
+	<string>Unity-iPhone</string>
+	<key>IDESourceControlProjectOriginsDictionary</key>
+	<dict>
+		<key>9482FFC0-9BF5-4C2C-B3F6-E199100343C7</key>
+		<string>https://github.com/yakumi226/iGo.git</string>
+	</dict>
+	<key>IDESourceControlProjectPath</key>
+	<string>iOS-Build/iGo/Unity-iPhone.xcodeproj/project.xcworkspace</string>
+	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
+	<dict>
+		<key>9482FFC0-9BF5-4C2C-B3F6-E199100343C7</key>
+		<string>../../../..</string>
+	</dict>
+	<key>IDESourceControlProjectURL</key>
+	<string>https://github.com/yakumi226/iGo.git</string>
+	<key>IDESourceControlProjectVersion</key>
+	<integer>110</integer>
+	<key>IDESourceControlProjectWCCIdentifier</key>
+	<string>9482FFC0-9BF5-4C2C-B3F6-E199100343C7</string>
+	<key>IDESourceControlProjectWCConfigurations</key>
+	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>9482FFC0-9BF5-4C2C-B3F6-E199100343C7</string>
+			<key>IDESourceControlWCCName</key>
+			<string>iGo</string>
+		</dict>
+	</array>
+</dict>
+</plist>

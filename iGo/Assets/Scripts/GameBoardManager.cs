@@ -95,7 +95,7 @@ public class GameBoardManager : MonoBehaviour {
 
 	void OnMouseEnter(){
 		// Hide Mouse Cursor 
-		Screen.showCursor = false;
+		Cursor.visible = false;
 
 		// Get Mouse Position
 		temp_cursor_pos = Input.mousePosition;
@@ -117,7 +117,7 @@ public class GameBoardManager : MonoBehaviour {
 
 	void OnMouseExit(){
 		// Show Mouse Cursor 
-		Screen.showCursor = true;
+		Cursor.visible = true;
 
 		// Destroy Cursor Object
 		Destroy(cursorClone);
